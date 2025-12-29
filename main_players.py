@@ -1,6 +1,8 @@
-from nba_api.library.http import NBAStatsHTTP
+import requests
+from nba_api.stats.library.parameters import SeasonAll
+from nba_api.stats.library.http import NBAStatsHTTP
 
-NBAStatsHTTP.DEFAULT_HEADERS = {
+HEADERS = {
     "Host": "stats.nba.com",
     "User-Agent": (
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
@@ -14,6 +16,8 @@ NBAStatsHTTP.DEFAULT_HEADERS = {
     "Referer": "https://www.nba.com/",
     "Origin": "https://www.nba.com",
 }
+
+requests.sessions.Session.headers.update(HEADERS)
 
 import os
 import datetime
