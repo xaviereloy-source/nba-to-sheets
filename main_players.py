@@ -59,34 +59,45 @@ def get_nba_season(date):
 def get_today_games():
     today = datetime.date.today()
     season = get_nba_season(today)
-
-    try:
-        games = leaguegamefinder.LeagueGameFinder(
-            season_nullable=season,
-            season_type_nullable="Regular Season",
-            timeout=300
-        ).get_data_frames()[0]
-
-    except ReadTimeout:
-        print("API NBA indisponible (timeout). On réessaiera demain.")
-        sys.exit(0)
-
-    games["GAME_DATE"] = games["GAME_DATE"].astype(str)
     today_str = today.strftime("%Y-%m-%d")
-    games_today = games[games["GAME_DATE"].str.startswith(today_str)]
-    return games_today
+
+    for attempt in range(1, 4):
+        try:
+            print(f"Tentative {attempt} récupération des matchs NBA...")
+            games = leaguegamefinder.LeagueGameFinder(
+                season_nullable=season,
+                season_type_nullable="Regular Season",
+                timeout=100
+            ).get_data_frames()[0]
+
+            games["GAME_DATE"] = games["GAME_DATE"].astype(str)
+            games_today = games[games["GAME_DATE"].str.startswith(today_str)]
+            return games_today
+
+        except Exception as e:
+            print(f"Erreur API NBA (tentative {attempt}) : {e}")
+            time.sleep(15)
+
+    print("API NBA indisponible après 3 tentatives. Abandon propre.")
+    sys.exit(0)
+
 
 def get_players_stats(game_id):
-    try:
-        boxscore = boxscoretraditionalv2.BoxScoreTraditionalV2(
-            game_id=game_id,
-            timeout=300
-        )
-        players = boxscore.get_data_frames()[0]
-        return players
-    except ReadTimeout:
-        print(f"Timeout sur le match {game_id}, ignoré.")
-        return None
+    for attempt in range(1, 4):
+        try:
+            boxscore = boxscoretraditionalv2.BoxScoreTraditionalV2(
+                game_id=game_id,
+                timeout=100
+            )
+            return boxscore.get_data_frames()[0]
+
+        except Exception as e:
+            print(f"Erreur boxscore match {game_id} (tentative {attempt}) : {e}")
+            time.sleep(10)
+
+    print(f"Match {game_id} ignoré après 3 échecs.")
+    return None
+
 
 # -----------------------------
 # GOOGLE SHEETS
