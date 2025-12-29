@@ -41,7 +41,7 @@ def get_today_games():
     Récupère les matchs NBA du jour.
     Si l'API NBA ne répond pas, on sort proprement.
     """
-    today = datetime.date.today().strftime("%Y-%m-%d")
+    today = "2024-03-15"
 
     try:
         games = leaguegamefinder.LeagueGameFinder(
@@ -100,7 +100,7 @@ if __name__ == "__main__":
 
     print("Démarrage du script NBA Player Stats")
 
-    today = datetime.date.today().strftime("%Y-%m-%d")
+    today = "2024-03-15"
     games_today = get_today_games()
 
     if games_today.empty:
