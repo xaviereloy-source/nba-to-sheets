@@ -37,25 +37,24 @@ sheet = service.spreadsheets()
 # NBA FUNCTIONS
 # ======================================================
 def get_today_games():
-    """
-    Récupère les matchs NBA du jour.
-    Si l'API NBA ne répond pas, on sort proprement.
-    """
-    today = "2024-03-15"
+    today = "2024-03-15"  # DATE DE TEST
 
     try:
         games = leaguegamefinder.LeagueGameFinder(
             season_nullable="2023-24",
             season_type_nullable="Regular Season",
-            timeout=60  # plus tolérant
+            timeout=60
         ).get_data_frames()[0]
 
     except ReadTimeout:
         print("API NBA indisponible (timeout). On réessaiera demain.")
-        sys.exit(0)  # sortie propre → workflow vert
+        sys.exit(0)
 
-    games_today = games[games["GAME_DATE"] == today]
+    games["GAME_DATE"] = games["GAME_DATE"].astype(str)
+    games_today = games[games["GAME_DATE"].str.startswith(today)]
+
     return games_today
+
 
 
 def get_players_stats(game_id):
