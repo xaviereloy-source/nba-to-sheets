@@ -31,7 +31,7 @@ sheet = service.spreadsheets()
 # NBA FUNCTIONS
 # ======================
 def get_today_games():
-    today = datetime.date.today().strftime("%Y-%m-%d")
+    today = 2024-03-15
 
     games = leaguegamefinder.LeagueGameFinder(
         season_nullable="2025-26",
