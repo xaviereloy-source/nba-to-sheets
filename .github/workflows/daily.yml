@@ -26,7 +26,7 @@ jobs:
 
       - name: Créer le fichier credentials Google
         run: |
-          echo "$GOOGLE_CREDENTIALS" > google-credentials.json
+          printf "%s" "$GOOGLE_CREDENTIALS" > google-credentials.json
 
       - name: Lancer le script NBA
         env:
