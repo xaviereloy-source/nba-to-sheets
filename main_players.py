@@ -43,7 +43,7 @@ def get_today_games():
         games = leaguegamefinder.LeagueGameFinder(
             season_nullable="2023-24",
             season_type_nullable="Regular Season",
-            timeout=60
+            timeout=300
         ).get_data_frames()[0]
 
     except ReadTimeout:
@@ -63,7 +63,7 @@ def get_players_stats(game_id):
     try:
         boxscore = boxscoretraditionalv2.BoxScoreTraditionalV2(
             game_id=game_id,
-            timeout=60
+            timeout=300
         )
         players = boxscore.get_data_frames()[0]
         return players
