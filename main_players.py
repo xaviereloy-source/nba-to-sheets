@@ -45,7 +45,7 @@ def get_today_games():
 
     try:
         games = leaguegamefinder.LeagueGameFinder(
-            season_nullable="2025-26",
+            season_nullable="2023-24",
             season_type_nullable="Regular Season",
             timeout=60  # plus tolérant
         ).get_data_frames()[0]
