@@ -1,9 +1,8 @@
 import os
 import time
-from datetime import datetime
 import pandas as pd
 
-from nba_api.stats.endpoints import leaguegamefinder, boxscoretraditionalv2
+from nba_api.stats.endpoints import leaguegamefinder, boxscoretraditionalv3
 
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
@@ -15,7 +14,7 @@ from googleapiclient.discovery import build
 
 SPREADSHEET_ID = os.environ.get("SPREADSHEET_ID")
 SHEET_NAME = "Player_Game_Stats"
-SEASON = "2025-26"   # modifiable si besoin
+SEASON = "2025-26"
 MAX_RETRIES = 3
 SLEEP_BETWEEN_CALLS = 2
 
@@ -81,10 +80,11 @@ def get_games_for_season():
 def get_players_stats(game_id):
     time.sleep(SLEEP_BETWEEN_CALLS)
 
-    boxscore = boxscoretraditionalv2.BoxScoreTraditionalV2(
+    boxscore = boxscoretraditionalv3.BoxScoreTraditionalV3(
         game_id=game_id
     )
 
+    # V3 → players stats sont dans la 1ère table
     df = boxscore.get_data_frames()[0]
     df["GAME_ID"] = game_id
     return df
