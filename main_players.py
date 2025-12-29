@@ -1,3 +1,20 @@
+from nba_api.library.http import NBAStatsHTTP
+
+NBAStatsHTTP.DEFAULT_HEADERS = {
+    "Host": "stats.nba.com",
+    "User-Agent": (
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/120.0.0.0 Safari/537.36"
+    ),
+    "Accept": "application/json, text/plain, */*",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Connection": "keep-alive",
+    "Referer": "https://www.nba.com/",
+    "Origin": "https://www.nba.com",
+}
+
 import os
 import datetime
 import time
