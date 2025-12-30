@@ -3,7 +3,7 @@ import time
 from datetime import datetime
 import pandas as pd
 
-from nba_api.stats.endpoints import leaguegamefinder, boxscoretraditionalv3
+from nba_api.stats.endpoints import scoreboardv3, boxscoretraditionalv3
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 
@@ -15,11 +15,7 @@ from googleapiclient.discovery import build
 SPREADSHEET_ID = os.environ.get("SPREADSHEET_ID")
 SHEET_NAME = "Player_Game_Stats"
 
-SEASON = "2025-26"
-
-MAX_RETRIES = 3
 SLEEP_BETWEEN_CALLS = 3
-SLEEP_BETWEEN_RETRIES = 10
 
 
 # =========================
@@ -57,31 +53,23 @@ def append_to_sheet(service, df):
 # =========================
 
 def get_today_games():
-    today = datetime.utcnow().strftime("%Y-%m-%d")
-    print(f"Recherche des matchs NBA pour la date : {today}")
+    game_date = datetime.utcnow().strftime("%Y-%m-%d")
+    print(f"Récupération du scoreboard NBA pour : {game_date}")
 
-    for attempt in range(1, MAX_RETRIES + 1):
-        try:
-            games = leaguegamefinder.LeagueGameFinder(
-                season_nullable=SEASON,
-                date_from_nullable=today,
-                date_to_nullable=today,
-                league_id_nullable="00"
-            ).get_data_frames()[0]
+    scoreboard = scoreboardv3.ScoreboardV3(
+        game_date=game_date,
+        league_id="00"
+    )
 
-            if games.empty:
-                print("Aucun match NBA aujourd’hui.")
-                return pd.DataFrame()
+    games_df = scoreboard.get_data_frames()[0]
 
-            print(f"{len(games)} matchs trouvés aujourd’hui.")
-            return games
+    if games_df.empty:
+        print("Aucun match NBA aujourd’hui.")
+        return []
 
-        except Exception as e:
-            print(f"Erreur API NBA (tentative {attempt}) : {e}")
-            time.sleep(SLEEP_BETWEEN_RETRIES)
-
-    print("API NBA indisponible après plusieurs tentatives.")
-    return pd.DataFrame()
+    game_ids = games_df["gameId"].unique().tolist()
+    print(f"{len(game_ids)} matchs trouvés aujourd’hui.")
+    return game_ids
 
 
 def get_players_stats(game_id):
@@ -101,17 +89,22 @@ def get_players_stats(game_id):
 # =========================
 
 if __name__ == "__main__":
-    print("Démarrage du script NBA Player Stats (matchs du jour)")
+    print("Démarrage du script NBA Player Stats (Scoreboard)")
 
-    games_today = get_today_games()
-    if games_today.empty:
+    try:
+        game_ids = get_today_games()
+    except Exception as e:
+        print(f"Erreur récupération scoreboard : {e}")
+        exit(0)
+
+    if not game_ids:
         print("Aucun match à traiter. Fin du script.")
         exit(0)
 
     service = get_sheets_service()
     all_players = []
 
-    for game_id in games_today["GAME_ID"].unique():
+    for game_id in game_ids:
         try:
             print(f"Traitement du match {game_id}")
             df_players = get_players_stats(game_id)
