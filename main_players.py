@@ -1,27 +1,16 @@
-import os
 import time
-import requests
 from datetime import datetime
+from nba_api.stats.endpoints import leaguegamefinder, boxscoretraditionalv3
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 
 # =============================
 # CONFIG
 # =============================
-SPREADSHEET_ID = os.environ["SPREADSHEET_ID"]
+SPREADSHEET_ID = "TON_SPREADSHEET_ID"
 SHEET_NAME = "Player_Game_Stats"
 
-BALDONTLIE_BASE_URL = "https://api.balldontlie.io/v1"
-BALLDONTLIE_API_KEY = os.environ.get("BALLDONTLIE_API_KEY")
-
-if not BALLDONTLIE_API_KEY:
-    raise ValueError("La variable d'environnement BALLDONTLIE_API_KEY n'est pas définie !")
-
-HEADERS = {
-    "Authorization": f"Bearer {BALLDONTLIE_API_KEY}"
-}
-
-SLEEP_BETWEEN_CALLS = 0.3  # délai entre appels API pour éviter blocage
+SLEEP_BETWEEN_CALLS = 2  # IMPORTANT pour éviter blocage NBA
 
 # =============================
 # GOOGLE SHEETS AUTH
@@ -37,7 +26,7 @@ sheets_service = build("sheets", "v4", credentials=creds)
 # =============================
 def append_rows(rows):
     if not rows:
-        print("Aucune donnée à écrire dans Google Sheets.")
+        print("Aucune donnée à écrire.")
         return
 
     sheets_service.spreadsheets().values().append(
@@ -49,92 +38,60 @@ def append_rows(rows):
     ).execute()
 
 
-def get_games_today(date_str):
-    try:
-        response = requests.get(
-            f"{BALDONTLIE_BASE_URL}/games",
-            params={"dates[]": date_str, "per_page": 100},
-            headers=HEADERS,  # headers fonctionnent pour /games
-            timeout=30
-        )
-        response.raise_for_status()
-        return response.json()["data"]
-    except Exception as e:
-        print("Erreur récupération matchs :", e)
-        return []
+def get_today_games():
+    today = datetime.today().strftime("%Y-%m-%d")
+    print(f"Recherche des matchs NBA pour {today}")
 
+    games = leaguegamefinder.LeagueGameFinder(
+        date_from_nullable=today,
+        date_to_nullable=today
+    ).get_data_frames()[0]
 
-def get_game_stats(game_id):
-    all_stats = []
-    page = 1
-    while True:
-        try:
-            # Utiliser api_key pour stats pour éviter 401
-            response = requests.get(
-                f"{BALDONTLIE_BASE_URL}/stats",
-                params={
-                    "game_ids[]": game_id,
-                    "per_page": 100,
-                    "page": page,
-                    "api_key": BALLDONTLIE_API_KEY
-                },
-                timeout=30
-            )
-            response.raise_for_status()
-            data = response.json()
-            all_stats.extend(data["data"])
-            if data["meta"]["next_page"] is None:
-                break
-            page += 1
-            time.sleep(SLEEP_BETWEEN_CALLS)
-        except Exception as e:
-            print(f"Erreur récupération stats game {game_id} :", e)
-            break
-    return all_stats
+    return games
+
 
 # =============================
 # MAIN
 # =============================
-print("Démarrage du script NBA Player Stats (balldontlie)")
+print("Démarrage script NBA Player Stats (NAS)")
 
-today = datetime.utcnow().strftime("%Y-%m-%d")
-print(f"Recherche des matchs NBA pour : {today}")
+games = get_today_games()
 
-games = get_games_today(today)
-if not games:
-    print("Aucun match aujourd'hui. Fin du script.")
+if games.empty:
+    print("Aucun match aujourd'hui.")
     exit(0)
 
-rows_to_insert = []
+rows = []
 
-for game in games:
-    game_id = game["id"]
-    game_date = game["date"][:10]
+for _, game in games.iterrows():
+    game_id = game["GAME_ID"]
+    game_date = game["GAME_DATE"]
 
-    print(f"Match ID {game_id} — récupération stats joueurs")
-    stats = get_game_stats(game_id)
+    print(f"Match {game_id} — récupération stats joueurs")
 
-    for s in stats:
-        player = s["player"]
-        team = s["team"]
-        rows_to_insert.append([
+    boxscore = boxscoretraditionalv3.BoxScoreTraditionalV3(
+        game_id=game_id
+    ).get_data_frames()[0]
+
+    for _, row in boxscore.iterrows():
+        rows.append([
             game_date,
             game_id,
-            player["id"],
-            f'{player["first_name"]} {player["last_name"]}',
-            team["abbreviation"],
-            s["pts"],
-            s["reb"],
-            s["ast"],
-            s["stl"],
-            s["blk"],
-            s["turnover"],
-            s["min"]
+            row["playerId"],
+            row["playerName"],
+            row["teamAbbreviation"],
+            row["points"],
+            row["reboundsTotal"],
+            row["assists"],
+            row["steals"],
+            row["blocks"],
+            row["turnovers"],
+            row["minutes"]
         ])
 
     time.sleep(SLEEP_BETWEEN_CALLS)
 
-append_rows(rows_to_insert)
+append_rows(rows)
 
-print(f"{len(rows_to_insert)} lignes ajoutées dans Google Sheets")
+print(f"{len(rows)} lignes ajoutées dans Google Sheets")
 print("Script terminé avec succès ✅")
