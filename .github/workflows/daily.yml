@@ -33,3 +33,4 @@ jobs:
         run: python main_players.py
         env:
           SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
+          BALLDONTLIE_API_KEY: ${{ secrets.BALLDONTLIE_API_KEY }}
