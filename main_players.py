@@ -1,9 +1,9 @@
 import os
 import time
+from datetime import datetime
 import pandas as pd
 
 from nba_api.stats.endpoints import leaguegamefinder, boxscoretraditionalv3
-
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 
@@ -16,6 +16,7 @@ SPREADSHEET_ID = os.environ.get("SPREADSHEET_ID")
 SHEET_NAME = "Player_Game_Stats"
 
 SEASON = "2025-26"
+
 MAX_RETRIES = 3
 SLEEP_BETWEEN_CALLS = 3
 SLEEP_BETWEEN_RETRIES = 10
@@ -55,21 +56,24 @@ def append_to_sheet(service, df):
 # NBA DATA
 # =========================
 
-def get_games_for_season():
+def get_today_games():
+    today = datetime.utcnow().strftime("%Y-%m-%d")
+    print(f"Recherche des matchs NBA pour la date : {today}")
+
     for attempt in range(1, MAX_RETRIES + 1):
         try:
-            print(f"Tentative {attempt} - récupération des matchs NBA ({SEASON})")
-
             games = leaguegamefinder.LeagueGameFinder(
                 season_nullable=SEASON,
+                date_from_nullable=today,
+                date_to_nullable=today,
                 league_id_nullable="00"
             ).get_data_frames()[0]
 
             if games.empty:
-                print("Aucun match trouvé pour cette saison.")
+                print("Aucun match NBA aujourd’hui.")
                 return pd.DataFrame()
 
-            print(f"{len(games)} matchs trouvés.")
+            print(f"{len(games)} matchs trouvés aujourd’hui.")
             return games
 
         except Exception as e:
@@ -97,18 +101,17 @@ def get_players_stats(game_id):
 # =========================
 
 if __name__ == "__main__":
-    print("Démarrage du script NBA Player Stats")
+    print("Démarrage du script NBA Player Stats (matchs du jour)")
 
-    games = get_games_for_season()
-    if games.empty:
+    games_today = get_today_games()
+    if games_today.empty:
         print("Aucun match à traiter. Fin du script.")
         exit(0)
 
     service = get_sheets_service()
-
     all_players = []
 
-    for game_id in games["GAME_ID"].unique():
+    for game_id in games_today["GAME_ID"].unique():
         try:
             print(f"Traitement du match {game_id}")
             df_players = get_players_stats(game_id)
@@ -121,7 +124,6 @@ if __name__ == "__main__":
         exit(0)
 
     final_df = pd.concat(all_players, ignore_index=True)
-
     append_to_sheet(service, final_df)
 
     print("Script terminé avec succès.")
