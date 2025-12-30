@@ -14,6 +14,9 @@ SHEET_NAME = "Player_Game_Stats"
 BALDONTLIE_BASE_URL = "https://api.balldontlie.io/v1"
 BALLDONTLIE_API_KEY = os.environ.get("BALLDONTLIE_API_KEY")
 
+if not BALLDONTLIE_API_KEY:
+    raise ValueError("La variable d'environnement BALLDONTLIE_API_KEY n'est pas définie !")
+
 HEADERS = {
     "Authorization": f"Bearer {BALLDONTLIE_API_KEY}"
 }
