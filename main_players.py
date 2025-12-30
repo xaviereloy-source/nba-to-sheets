@@ -21,7 +21,7 @@ HEADERS = {
     "Authorization": f"Bearer {BALLDONTLIE_API_KEY}"
 }
 
-SLEEP_BETWEEN_CALLS = 0.3  # pour éviter d’être bloqué
+SLEEP_BETWEEN_CALLS = 0.3  # délai entre appels API pour éviter blocage
 
 # =============================
 # GOOGLE SHEETS AUTH
@@ -54,7 +54,7 @@ def get_games_today(date_str):
         response = requests.get(
             f"{BALDONTLIE_BASE_URL}/games",
             params={"dates[]": date_str, "per_page": 100},
-            headers=HEADERS,
+            headers=HEADERS,  # headers fonctionnent pour /games
             timeout=30
         )
         response.raise_for_status()
@@ -69,10 +69,15 @@ def get_game_stats(game_id):
     page = 1
     while True:
         try:
+            # Utiliser api_key pour stats pour éviter 401
             response = requests.get(
                 f"{BALDONTLIE_BASE_URL}/stats",
-                params={"game_ids[]": game_id, "per_page": 100, "page": page},
-                headers=HEADERS,
+                params={
+                    "game_ids[]": game_id,
+                    "per_page": 100,
+                    "page": page,
+                    "api_key": BALLDONTLIE_API_KEY
+                },
                 timeout=30
             )
             response.raise_for_status()
