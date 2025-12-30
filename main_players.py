@@ -3,43 +3,22 @@ import time
 import pandas as pd
 
 from nba_api.stats.endpoints import leaguegamefinder, boxscoretraditionalv3
-from nba_api.library.http import NBAStatsHTTP
 
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 
 
 # =========================
-# CONFIG GÉNÉRALE
+# CONFIG
 # =========================
 
 SPREADSHEET_ID = os.environ.get("SPREADSHEET_ID")
 SHEET_NAME = "Player_Game_Stats"
 
-SEASON = "2025-26"          # Saison NBA
-MAX_RETRIES = 3             # Tentatives API NBA
-SLEEP_BETWEEN_CALLS = 3     # Pause entre appels NBA (important)
-SLEEP_BETWEEN_RETRIES = 10  # Pause entre retries
-
-
-# =========================
-# HEADERS NBA (ANTI-BLOCAGE)
-# =========================
-
-NBAStatsHTTP.DEFAULT_HEADERS = {
-    "Host": "stats.nba.com",
-    "Connection": "keep-alive",
-    "Accept": "application/json, text/plain, */*",
-    "x-nba-stats-token": "true",
-    "User-Agent": (
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/120.0.0.0 Safari/537.36"
-    ),
-    "x-nba-stats-origin": "stats",
-    "Referer": "https://www.nba.com/",
-    "Accept-Language": "en-US,en;q=0.9",
-}
+SEASON = "2025-26"
+MAX_RETRIES = 3
+SLEEP_BETWEEN_CALLS = 3
+SLEEP_BETWEEN_RETRIES = 10
 
 
 # =========================
