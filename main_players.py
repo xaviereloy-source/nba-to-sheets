@@ -12,7 +12,7 @@ from googleapiclient.discovery import build
 # =============================
 SPREADSHEET_ID = os.environ["SPREADSHEET_ID"]
 SHEET_NAME = "Player_Game_Stats"
-BALDONTLIE_BASE_URL = "https://www.balldontlie.io/api/v1"
+BALDONTLIE_BASE_URL = "https://api.balldontlie.io/v1"
 
 # =============================
 # GOOGLE SHEETS AUTH
